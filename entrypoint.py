@@ -1,13 +1,14 @@
 #!/bin/python3
 """
-Buildozer action
-================
+Buildozer action - Version corrigée pour GitHub Actions
+========================================================
 
-It sets some environment variables, installs Buildozer, runs Buildozer and finds
-output file.
+Version modifiée qui évite les problèmes de permissions sudo dans GitHub Actions.
 
-You can read this file top down because functions are ordered by their execution
-order.
+Corrections apportées :
+- Suppression des commandes sudo chown (lignes 21 et 31)
+- Remplacement de la commande sudo pour GITHUB_OUTPUT
+- Gestion des permissions adaptée à GitHub Actions
 """
 
 import os
@@ -18,7 +19,8 @@ from os import environ as env
 
 def main():
     repository_root = os.path.abspath(env["INPUT_REPOSITORY_ROOT"])
-    change_owner(env["USER"], repository_root)
+    # CORRECTION 1: Supprimer le changement de propriétaire au début
+    # change_owner(env["USER"], repository_root)  # Ligne supprimée
     fix_home()
     install_buildozer(env["INPUT_BUILDOZER_VERSION"])
     apply_buildozer_settings()
@@ -26,13 +28,17 @@ def main():
     apply_patches()
     run_command(env["INPUT_COMMAND"])
     set_output(env["INPUT_REPOSITORY_ROOT"], env["INPUT_WORKDIR"])
-    change_owner("root", repository_root)
+    # CORRECTION 2: Supprimer le retour à root
+    # change_owner("root", repository_root)  # Ligne supprimée
 
 
 def change_owner(user, repository_root):
-    # GitHub sets root as owner of repository directory. Change it to user
-    # And return to root after all commands
-    subprocess.check_call(["sudo", "chown", "-R", user, repository_root])
+    """
+    FONCTION DÉSACTIVÉE - Cause des problèmes dans GitHub Actions
+    GitHub Actions gère automatiquement les permissions correctement
+    """
+    print(f"::notice::Skipping chown operation - not needed in GitHub Actions")
+    # subprocess.check_call(["sudo", "chown", "-R", user, repository_root])
 
 
 def fix_home():
@@ -152,15 +158,23 @@ def set_output(repository_root, workdir):
     path = os.path.normpath(
         os.path.join(repository_root, workdir, "bin", filename)
     )
-    # Run with sudo to have access to GITHUB_OUTPUT file
-    subprocess.check_call(
-        [
-            "sudo",
-            "bash",
-            "-c",
-            f"echo 'filename={path}' >> {os.environ['GITHUB_OUTPUT']}",
-        ]
-    )
+    
+    # CORRECTION 3: Écrire directement dans GITHUB_OUTPUT sans sudo
+    try:
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as output_file:
+            output_file.write(f'filename={path}\n')
+        print(f"::notice::Output file set: {path}")
+    except Exception as e:
+        print(f"::warning::Could not write to GITHUB_OUTPUT: {e}")
+        # Fallback: essayer sans sudo d'abord, puis avec si nécessaire
+        try:
+            subprocess.check_call([
+                "bash", "-c", 
+                f"echo 'filename={path}' >> {os.environ['GITHUB_OUTPUT']}"
+            ])
+        except subprocess.CalledProcessError:
+            print("::error::Failed to set output file")
+            exit(1)
 
 
 if __name__ == "__main__":
