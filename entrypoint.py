@@ -1,6 +1,6 @@
 #!/bin/python3
 """
-Buildozer action - Version corrigée pour GitHub Actions (Refait par Elisée ATIKPO)
+Buildozer action - Version corrigée pour GitHub Actions
 ========================================================
 
 Version modifiée qui évite les problèmes de permissions sudo dans GitHub Actions.
@@ -9,7 +9,6 @@ Corrections apportées :
 - Suppression des commandes sudo chown (lignes 21 et 31)
 - Remplacement de la commande sudo pour GITHUB_OUTPUT
 - Gestion des permissions adaptée à GitHub Actions
-- Installation complète des dépendances système nécessaires
 """
 
 import os
@@ -86,46 +85,13 @@ def install_system_deps():
     # Install missing system dependencies
     print("::group::Installing system dependencies")
     try:
-        # Mise à jour du cache des paquets
         subprocess.check_call(["apt", "update", "-qq"])
-        
-        # Installation des dépendances complètes nécessaires pour buildozer
-        deps = [
-            # Outils de base
-            "wget", "curl", "unzip", "zip",
-            
-            # Outils de développement
-            "build-essential", "git", "python3-dev",
-            
-            # Outils GNU autotools (CRITIQUES pour liblzma)
-            "autoconf", "automake", "autotools-dev", "libtool",
-            "gettext", "gettext-base", "autopoint",
-            
-            # Bibliothèques de développement
-            "zlib1g-dev", "libncurses5-dev", "libncursesw5-dev",
-            "libtinfo5", "cmake", "libffi-dev", "libssl-dev",
-            
-            # Outils Java/Android
-            "openjdk-17-jdk", "openjdk-17-jre",
-            
-            # Autres dépendances utiles
-            "pkg-config", "libltdl-dev", "libc6-dev-i386",
-            "lib32stdc++6", "lib32z1", "lib32z1-dev"
-        ]
-        
-        subprocess.check_call(["apt", "install", "-y"] + deps)
-        print("::notice::Installed all build tools and dependencies")
-        
-        # Vérifier que autopoint est bien installé
-        try:
-            subprocess.check_call(["which", "autopoint"])
-            print("::notice::autopoint is correctly installed")
-        except subprocess.CalledProcessError:
-            print("::error::autopoint is still missing after installation")
-            
+        subprocess.check_call(["apt", "install", "-y", 
+                              "wget", "curl", "gettext", "autotools-dev", 
+                              "autoconf", "automake", "build-essential"])
+        print("::notice::Installed build tools and dependencies")
     except subprocess.CalledProcessError as e:
-        print(f"::error::Could not install system dependencies: {e}")
-        exit(1)
+        print(f"::warning::Could not install system dependencies: {e}")
     print("::endgroup::")
 
 
