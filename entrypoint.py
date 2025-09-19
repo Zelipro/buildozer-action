@@ -1,6 +1,6 @@
 #!/bin/python3
 """
-Buildozer action - Version corrigée pour GitHub Actions
+Buildozer action - Version corrigée pour GitHub Actions (Refait par Elisée ATIKPO)
 ========================================================
 
 Version modifiée qui évite les problèmes de permissions sudo dans GitHub Actions.
@@ -86,8 +86,10 @@ def install_system_deps():
     print("::group::Installing system dependencies")
     try:
         subprocess.check_call(["apt", "update", "-qq"])
-        subprocess.check_call(["apt", "install", "-y", "wget", "curl"])
-        print("::notice::Installed wget and curl")
+        subprocess.check_call(["apt", "install", "-y", 
+                              "wget", "curl", "gettext", "autotools-dev", 
+                              "autoconf", "automake", "build-essential"])
+        print("::notice::Installed build tools and dependencies")
     except subprocess.CalledProcessError as e:
         print(f"::warning::Could not install system dependencies: {e}")
     print("::endgroup::")
