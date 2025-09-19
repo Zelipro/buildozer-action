@@ -22,6 +22,7 @@ def main():
     # CORRECTION 1: Supprimer le changement de propriétaire au début
     # change_owner(env["USER"], repository_root)  # Ligne supprimée
     fix_home()
+    configure_pip()  # CORRECTION 5: Configurer pip avant d'installer buildozer
     install_buildozer(env["INPUT_BUILDOZER_VERSION"])
     apply_buildozer_settings()
     change_directory(env["INPUT_REPOSITORY_ROOT"], env["INPUT_WORKDIR"])
@@ -76,6 +77,18 @@ def install_buildozer(buildozer_version):
                 f"git+https://github.com/kivy/buildozer.git@{buildozer_version}",
             ]
         )
+    print("::endgroup::")
+
+
+def configure_pip():
+    # Configure pip pour éviter l'erreur externally-managed-environment
+    print("::group::Configuring pip for externally-managed environment")
+    pip_conf_dir = os.path.expanduser("~/.pip")
+    pip_conf = os.path.join(pip_conf_dir, "pip.conf")
+    os.makedirs(pip_conf_dir, exist_ok=True)
+    with open(pip_conf, "w") as f:
+        f.write("[global]\nbreak-system-packages = true\n")
+    print(f"::notice::Created pip.conf with break-system-packages = true")
     print("::endgroup::")
 
 
