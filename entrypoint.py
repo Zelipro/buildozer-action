@@ -49,7 +49,8 @@ def fix_home():
 def install_buildozer(buildozer_version):
     # Install required Buildozer version
     print("::group::Installing Buildozer")
-    pip_install = [sys.executable] + "-m pip install --user --upgrade".split()
+    # CORRECTION 4: Ajouter --break-system-packages pour Ubuntu 24.04
+    pip_install = [sys.executable] + "-m pip install --user --upgrade --break-system-packages".split()
     if buildozer_version == "stable":
         # Install stable buildozer from PyPI
         subprocess.check_call([*pip_install, "buildozer"])
