@@ -9,6 +9,7 @@ Corrections apportées :
 - Suppression des commandes sudo chown (lignes 21 et 31)
 - Remplacement de la commande sudo pour GITHUB_OUTPUT
 - Gestion des permissions adaptée à GitHub Actions
+- AJOUT: Installation de autopoint et gettext pour pandas/liblzma
 """
 
 import os
@@ -82,16 +83,39 @@ def install_buildozer(buildozer_version):
 
 
 def install_system_deps():
-    # Install missing system dependencies
+    # Install missing system dependencies INCLUDING autopoint for pandas/liblzma
     print("::group::Installing system dependencies")
     try:
+        print("::notice::Updating package lists...")
         subprocess.check_call(["apt", "update", "-qq"])
+        
+        print("::notice::Installing build tools and dependencies...")
         subprocess.check_call(["apt", "install", "-y", 
-                              "wget", "curl", "gettext", "autotools-dev", 
-                              "autoconf", "automake", "build-essential"])
-        print("::notice::Installed build tools and dependencies")
+                              "wget", 
+                              "curl", 
+                              "gettext",           # Contient autopoint
+                              "autopoint",         # Spécifiquement pour l'erreur
+                              "autotools-dev", 
+                              "autoconf", 
+                              "automake", 
+                              "libtool",           # Nécessaire pour liblzma
+                              "build-essential",
+                              "pkg-config"])       # Utile pour la compilation
+        print("::notice::Successfully installed all build tools and dependencies")
+        
+        # Vérifier que autopoint est bien installé
+        try:
+            subprocess.check_call(["which", "autopoint"], 
+                                stdout=subprocess.DEVNULL, 
+                                stderr=subprocess.DEVNULL)
+            print("::notice::autopoint successfully installed and available")
+        except subprocess.CalledProcessError:
+            print("::warning::autopoint not found after installation")
+            
     except subprocess.CalledProcessError as e:
-        print(f"::warning::Could not install system dependencies: {e}")
+        print(f"::error::Could not install system dependencies: {e}")
+        print("::error::This may cause build failures for pandas and other native dependencies")
+        sys.exit(1)  # Arrêter si l'installation échoue
     print("::endgroup::")
 
 
