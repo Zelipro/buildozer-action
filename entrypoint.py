@@ -22,6 +22,7 @@ def main():
     # CORRECTION 1: Supprimer le changement de propriétaire au début
     # change_owner(env["USER"], repository_root)  # Ligne supprimée
     fix_home()
+    install_system_deps()  # CORRECTION 6: Installer les dépendances système manquantes
     configure_pip()  # CORRECTION 5: Configurer pip avant d'installer buildozer
     install_buildozer(env["INPUT_BUILDOZER_VERSION"])
     apply_buildozer_settings()
@@ -77,6 +78,18 @@ def install_buildozer(buildozer_version):
                 f"git+https://github.com/kivy/buildozer.git@{buildozer_version}",
             ]
         )
+    print("::endgroup::")
+
+
+def install_system_deps():
+    # Install missing system dependencies
+    print("::group::Installing system dependencies")
+    try:
+        subprocess.check_call(["apt", "update", "-qq"])
+        subprocess.check_call(["apt", "install", "-y", "wget", "curl"])
+        print("::notice::Installed wget and curl")
+    except subprocess.CalledProcessError as e:
+        print(f"::warning::Could not install system dependencies: {e}")
     print("::endgroup::")
 
 
